@@ -1,7 +1,22 @@
 #
 # Conditional build:
-%bcond_without	qt	# without Qt GUI
-%bcond_without	x11	# without X11 session monitoring
+%bcond_without	qt		# without Qt GUI
+%bcond_without	webengine	# without Qt WebEngine support
+%bcond_with	webkit		# with Qt WebKit instead Qt WebEngine
+%bcond_without	x11		# without X11 session monitoring
+
+%ifarch x32
+%undefine	with_webengine
+%endif
+
+%if %{with webkit}
+%undefine	with_webengine
+%endif
+
+%if %{without qt}
+%undefine	with_webengine
+%undefine	with_webkit
+%endif
 
 Summary:	Desktop full-text search tool
 Name:		recoll
@@ -27,7 +42,8 @@ BuildRequires:	zlib-devel
 BuildRequires:	Qt5Core-devel
 BuildRequires:	Qt5Gui-devel
 BuildRequires:	Qt5PrintSupport-devel
-BuildRequires:	Qt5WebEngine-devel
+%{?with_webengine:BuildRequires:	Qt5WebEngine-devel}
+%{?with_webkit:BuildRequires:	Qt5WebKit-devel}
 BuildRequires:	Qt5Widgets-devel
 BuildRequires:	Qt5Xml-devel
 BuildRequires:	qt5-qmake
@@ -64,7 +80,8 @@ grep -rl '#!.*env python' -l filters | xargs %{__sed} -i -e '1s,#!.*env python3$
 	--disable-python-module \
 	--enable-recollq \
 	--with-fam=no \
-	%{?with_qt:--enable-webengine} \
+	%{?with_webengine:--enable-webengine} \
+	%{!?with_webkit:--disable-webkit} \
 	%{!?with_qt:--disable-qtgui} \
 	%{!?with_x11:--disable-x11mon}
 %{__make} \
